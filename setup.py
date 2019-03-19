@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 from os import path
 
 here = path.abspath(path.dirname(__file__))
@@ -12,7 +12,7 @@ setup(
 
     # Versions should comply with PEP 440:
     # https://www.python.org/dev/peps/pep-0440/
-    version='1.0a',
+    version='1.0a0',
 
     description='Versatile Binary Format Tool',
 
@@ -48,5 +48,6 @@ setup(
     project_urls={
         'Bug Reports': 'https://github.com/dsch/vbftool/issues',
         'Source': 'https://github.com/dsch/vbftool',
+        'Continuous Integration': 'https://travis-ci.org/dsch/vbftool',
     },
 )

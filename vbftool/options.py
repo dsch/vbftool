@@ -62,7 +62,8 @@ class SwPartNumber(Option):
 
 class SwPartNumberDID(Option):
     def __init__(self, value):
-        super().__init__('sw_part_number_DID', 'DID to read software part number', value)
+        super().__init__('sw_part_number_DID',
+                         'DID to read software part number', value)
 
 
 class SwPartType(Option):

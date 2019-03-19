@@ -1,3 +1,4 @@
+import os
 from io import BytesIO
 from array import array
 
@@ -10,7 +11,8 @@ def test_reference():
     start_addr = 64 * 1024  # 64 KB
     length = 128 * 1024  # 128 KB
     vbf = Vbf(VbfVersion.VERSION_JLR3_0, start_addr, length, data)
-    vbf.add_option(opts.Description(['SOP software for X400 AWD', 'Created: 2002-03-14']))
+    vbf.add_option(opts.Description(['SOP software for X400 AWD',
+                                     'Created: 2002-03-14']))
     vbf.add_option(opts.SwPartNumber('318-08832-AB'))
     vbf.add_option(opts.SwPartNumberDID(0xF188))
     vbf.add_option(opts.SwPartType(SwPartType.EXE))
@@ -21,7 +23,11 @@ def test_reference():
     vbf.add_option(opts.Erase([(start_addr, length)]))
     vbf.add_option(opts.Call(start_addr))
 
-    with open('reference.vbf', 'rb') as fp:
+    ref_filename = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        'reference.vbf',
+    )
+    with open(ref_filename, 'rb') as fp:
         reference = fp.read()
 
     with open('test.vbf', 'wb') as fp:

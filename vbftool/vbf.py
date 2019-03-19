@@ -35,9 +35,12 @@ class Network(Enum):
 
 
 class FrameFormat(Enum):
-    CAN_STANDARD = 'CAN_STANDARD'  # standard frame format, 11-bit CAN identifiers
-    CAN_EXTENDED = 'CAN_EXTENDED'  # extended frame format, 29-bit CAN identifiers
-    LOGICAL_ADDRESS = '16BIT_STANDARD'  # 16 bit DoIP logical address or 16 bit FlexRay logical address
+    # standard frame format, 11-bit CAN identifiers
+    CAN_STANDARD = 'CAN_STANDARD'
+    # extended frame format, 29-bit CAN identifiers
+    CAN_EXTENDED = 'CAN_EXTENDED'
+    # 16 bit DoIP logical address or 16 bit FlexRay logical address
+    LOGICAL_ADDRESS = '16BIT_STANDARD'
 
 
 class SwPartType(Enum):
@@ -61,7 +64,9 @@ class Vbf:
 
     def dump(self, fp):
         data_checksum = crc16(self.data)
-        content = struct.pack('>II', self.start_addr, len(self.data)) + self.data + struct.pack('>H', data_checksum)
+        content = struct.pack('>II', self.start_addr, len(self.data))
+        content += self.data
+        content += struct.pack('>H', data_checksum)
         file_checksum = crc32(content)
 
         writeline(fp, 'vbf_version = %s;' % self.version.value)
