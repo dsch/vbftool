@@ -1,5 +1,5 @@
 from enum import Enum
-from vbftool.vbf import writeline, newline
+from vbftool.output import writeline, newline
 
 
 # Allowed identifiers:
@@ -21,30 +21,31 @@ from vbftool.vbf import writeline, newline
 
 
 class Option:
-    def __init__(self, name, description, value):
+    def __init__(self, name, description, value, number_format='0x%x'):
         self._name = name
         self._desc = description
         self._value = value
+        self._number_format = number_format
 
-    def format_value(self, value):
+    def _format_value(self, value):
         if isinstance(value, Enum):
             value = value.value
         elif isinstance(value, int):
-            value = '0x%x' % value
+            value = self._number_format % value
         elif isinstance(value, str):
             value = '"%s"' % value
         elif isinstance(value, tuple):
-            x = [self.format_value(s) for s in value]
+            x = [self._format_value(s) for s in value]
             value = '{ %s }' % ', '.join(x)
         elif isinstance(value, list):
-            x = [self.format_value(s) for s in value]
+            x = [self._format_value(s) for s in value]
             value = '{ %s }' % ', '.join(x)
         return value
 
     def dump(self, fp):
-        writeline(fp, '\t//%s' % self._desc)
+        writeline(fp, '\t// %s' % self._desc)
 
-        value = self.format_value(self._value)
+        value = self._format_value(self._value)
 
         writeline(fp, '\t%s = %s;' % (self._name, value))
         newline(fp)
@@ -52,6 +53,8 @@ class Option:
 
 class Description(Option):
     def __init__(self, value):
+        if not isinstance(value, list):
+            value = [value]
         super().__init__('description', 'Description', value)
 
 
@@ -63,7 +66,7 @@ class SwPartNumber(Option):
 class SwPartNumberDID(Option):
     def __init__(self, value):
         super().__init__('sw_part_number_DID',
-                         'DID to read software part number', value)
+                         'DID to read software part number', value, number_format='0x%04X')
 
 
 class SwPartType(Option):
@@ -72,8 +75,9 @@ class SwPartType(Option):
 
 
 class DataFormatIdentifier(Option):
-    def __init__(self, value):
-        super().__init__('data_format_identifier', 'Format identifier', value)
+    def __init__(self, compression_method, encryption_method):
+        super().__init__('data_format_identifier', 'Format identifier', compression_method << 4 | encryption_method,
+                         number_format='0x%02x')
 
 
 class Network(Option):
@@ -83,7 +87,7 @@ class Network(Option):
 
 class EcuAddress(Option):
     def __init__(self, value):
-        super().__init__('ecu_address', 'ecu_address or list', value)
+        super().__init__('ecu_address', 'ECU address or list', value)
 
 
 class FrameFormat(Option):
@@ -93,9 +97,9 @@ class FrameFormat(Option):
 
 class Erase(Option):
     def __init__(self, value):
-        super().__init__('erase', 'erase block', value)
+        super().__init__('erase', 'Erase block', value)
 
 
 class Call(Option):
     def __init__(self, value):
-        super().__init__('call', 'call address', value)
+        super().__init__('call', 'Call address', value)

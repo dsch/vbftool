@@ -2,14 +2,8 @@ import struct
 from enum import Enum
 
 from vbftool.checksum import crc16, crc32
-
-
-def writeline(fp, s):
-    fp.write(b'%s\r\n' % s.encode('utf-8'))
-
-
-def newline(fp):
-    fp.write(b'\r\n')
+from vbftool.options import Option
+from vbftool.output import writeline, newline
 
 
 class VbfVersion(Enum):
@@ -54,6 +48,11 @@ class SwPartType(Enum):
     TEST = 'TEST'  # Test program, (i.e. production test, diagnostics)
 
 
+class _FileChecksum(Option):
+    def __init__(self, value):
+        super().__init__('file_checksum', 'file checksum', value, number_format='0x%08x')
+
+
 class Vbf:
     def __init__(self, version, start_addr, memory_size, data):
         self.version = version
@@ -63,11 +62,8 @@ class Vbf:
         self._options = []
 
     def dump(self, fp):
-        data_checksum = crc16(self.data)
-        content = struct.pack('>II', self.start_addr, len(self.data))
-        content += self.data
-        content += struct.pack('>H', data_checksum)
-        file_checksum = crc32(content)
+        content = self.create_data_block(self.start_addr, self.data)
+        file_checksum = _FileChecksum(crc32(content))
 
         writeline(fp, 'vbf_version = %s;' % self.version.value)
         newline(fp)
@@ -77,13 +73,19 @@ class Vbf:
         for option in self._options:
             option.dump(fp)
 
-        writeline(fp, '\t//file checksum')
-        writeline(fp, '\t%s = 0x%08x;' % ('file_checksum', file_checksum))
-        newline(fp)
+        file_checksum.dump(fp)
 
         fp.write(b'}')
 
         fp.write(content)
+
+    @staticmethod
+    def create_data_block(start_addr, data):
+        data_checksum = crc16(data)
+        content = struct.pack('>II', start_addr, len(data))
+        content += data
+        content += struct.pack('>H', data_checksum)
+        return content
 
     def add_option(self, option):
         self._options.append(option)
