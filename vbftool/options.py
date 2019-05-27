@@ -34,12 +34,9 @@ class Option:
             value = self._number_format % value
         elif isinstance(value, str):
             value = '"%s"' % value
-        elif isinstance(value, tuple):
+        elif isinstance(value, tuple) or isinstance(value, list):
             x = [self._format_value(s) for s in value]
-            value = '{ %s }' % ', '.join(x)
-        elif isinstance(value, list):
-            x = [self._format_value(s) for s in value]
-            value = '{ %s }' % ', '.join(x)
+            value = '{%s}' % ', '.join(x)
         return value
 
     def dump(self, fp):
