@@ -73,7 +73,8 @@ class SwPartType(Option):
 
 class DataFormatIdentifier(Option):
     def __init__(self, compression_method, encryption_method):
-        super().__init__('data_format_identifier', 'Format identifier', compression_method << 4 | encryption_method,
+        super().__init__('data_format_identifier', 'Format identifier',
+                         compression_method << 4 | encryption_method,
                          number_format='0x%02x')
 
 
