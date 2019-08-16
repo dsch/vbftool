@@ -1,25 +1,25 @@
+from collections import deque
+
+
 class Buffer:
-    def __init__(self, stream):
-        self._stream = stream
+    def __init__(self):
+        self._queue = deque()
         self._use = 0
         self._d = 0
 
-    def fill(self):
+    def __fill(self):
         while self._use <= 16:
-            nxt = self._stream.read(1)
-            if nxt:
-                self._d |= (nxt[0] << (24 - 8 - self._use))
+            try:
+                pop = self._queue.pop()
+                self._d |= (pop << (24 - 8 - self._use))
                 self._use += 8
-            else:
+            except IndexError:
                 break
         return self._use > 0
 
-    def decode(self):
-        self._stream.seek(0)  # rewind the stream
-        self._use = 0
-        self._d = 0
-
-        while self.fill():
+    def decode(self, data):
+        self._queue.extendleft(data)
+        while self.__fill():
             if self._d & 0x800000:
                 # uncompressed
                 data = (self._d >> (24 - 9)) & 0xFF
@@ -31,6 +31,7 @@ class Buffer:
                 offset = (self._d >> (24 - 11)) & 0x3FF
                 if offset == 0:
                     break
+                offset -= 1  # offset is one based
                 length = ((self._d >> (24 - 15)) & 0xF) + 2
                 self._d = (self._d << 15) & 0xFFFFFF
                 self._use -= 15
@@ -38,28 +39,34 @@ class Buffer:
 
 
 class Decompressor:
+    def __init__(self):
+        self.buf = Buffer()
+
+        self.dictionary = bytearray(1024)
+        self.dict_pos = 0
+
     @staticmethod
     def __window(x):
         return x & 0x3FF
 
-    def decompress(self, input, output):
-        buf = Buffer(input)
+    def increment_dict_pos(self, inc):
+        self.dict_pos = self.__window(self.dict_pos + inc)
 
-        dictionary = bytearray(2 ** 10)
-        dict_pos = 0
-        for compressed, x in buf.decode():
+    def decompress(self, data):
+        output = bytearray()
+
+        for compressed, x in self.buf.decode(data):
             if compressed:
                 offset, length = x
-                offset -= 1  # offset 0 indicates end of stream
-                finding = bytearray(length)
                 for c in range(length):
-                    dictionary[dict_pos] = dictionary[self.__window(offset + c)]
-                    finding[c] = dictionary[dict_pos]
-                    dict_pos = self.__window(dict_pos + 1)
+                    temp = self.dictionary[self.__window(offset + c)]
+                    self.dictionary[self.dict_pos] = temp
+                    self.increment_dict_pos(1)
+                    output.append(temp)
             else:
                 # uncompressed
-                dictionary[dict_pos] = x
-                dict_pos = self.__window(dict_pos + 1)
-                finding = bytes([x])
-            # print(x, finding, '0x%06X' % buf._d, buf._use)
-            output.write(finding)
+                self.dictionary[self.dict_pos] = x
+                self.increment_dict_pos(1)
+                output.append(x)
+
+        return output

@@ -7,10 +7,9 @@ data = b'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed lacus nequ
 
 
 def test_decompress():
-    input = io.BytesIO(compressed_data)
-    output = io.BytesIO()
+    out = b''
 
     decompressor = Decompressor()
-    decompressor.decompress(input, output)
+    out += decompressor.decompress(compressed_data)
 
-    assert (output.getvalue() == data)
+    assert (out == data)

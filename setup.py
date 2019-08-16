@@ -25,7 +25,7 @@ setup(
     author_email='schneidav81@gmail.com',
 
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Embedded Systems',
         'License :: OSI Approved :: MIT License',
