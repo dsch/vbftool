@@ -1,9 +1,12 @@
+import logging
 import struct
 from enum import Enum
 
 from vbftool.checksum import crc16, crc32
 from vbftool.options import Option
 from vbftool.output import writeline, newline
+
+log = logging.getLogger(__name__)
 
 
 class VbfVersion(Enum):
@@ -81,8 +84,14 @@ class Vbf:
 
     @staticmethod
     def create_data_block(start_addr, data):
-        data_checksum = crc16(data)
-        content = struct.pack('>II', start_addr, len(data))
+        data_checksum = crc16(data)  # data checksum is always calculated from uncompressed data
+        if 0:  # compression enabled
+            data = lzss.encode(bytes(data), 10, 4)
+        data_length = len(data)
+        log.info("block start address: 0x%08x", start_addr)
+        log.info("block length: 0x%08x", data_length)
+        log.info("block checksum: 0x%04x", data_checksum)
+        content = struct.pack('>II', start_addr, data_length)
         content += data
         content += struct.pack('>H', data_checksum)
         return content
