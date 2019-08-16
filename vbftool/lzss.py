@@ -51,11 +51,21 @@ class Buffer:
                     self._needs_input = True
                     break
 
+    def encode_uncompressed(self, x):
+        self._d |= 0x1 << (24 - 1 - self._use)  # uncompressed
+        self._d |= x << (24 - 9 - self._use)
+        self._use += 9
 
-class Decompressor:
+        output = bytearray()
+        while self._use > 7:
+            output.append((self._d >> 16) & 0xFF)
+            self._d = (self._d << 8) & 0xFFFFFF
+            self._use -= 8
+        return output
+
+
+class Dictionary:
     def __init__(self):
-        self.buf = Buffer()
-
         self.dictionary = bytearray(1024)
         self.dict_pos = 0
 
@@ -66,6 +76,19 @@ class Decompressor:
     def increment_dict_pos(self, inc):
         self.dict_pos = self.__window(self.dict_pos + inc)
 
+    def append(self, x):
+        self.dictionary[self.dict_pos] = x
+        self.increment_dict_pos(1)
+
+    def __getitem__(self, item):
+        return self.dictionary[self.__window(item)]
+
+
+class Decompressor:
+    def __init__(self):
+        self.buf = Buffer()
+        self.dictionary = Dictionary()
+
     def decompress(self, data):
         output = bytearray()
 
@@ -73,14 +96,23 @@ class Decompressor:
             if compressed:
                 offset, length = x
                 for c in range(length):
-                    temp = self.dictionary[self.__window(offset + c)]
-                    self.dictionary[self.dict_pos] = temp
-                    self.increment_dict_pos(1)
+                    temp = self.dictionary[offset + c]
+                    self.dictionary.append(temp)
                     output.append(temp)
             else:
                 # uncompressed
-                self.dictionary[self.dict_pos] = x
-                self.increment_dict_pos(1)
+                self.dictionary.append(x)
                 output.append(x)
 
+        return output
+
+
+class Compressor:
+    def __init__(self):
+        self.buf = Buffer()
+
+    def compress(self, data):
+        output = bytearray()
+        for c in data:
+            output += self.buf.encode_uncompressed(c)
         return output
