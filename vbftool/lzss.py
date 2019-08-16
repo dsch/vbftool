@@ -6,6 +6,8 @@ class Buffer:
         self._queue = deque()
         self._use = 0
         self._d = 0
+        self._eof = False
+        self._needs_input = True
 
     def __fill(self):
         while self._use <= 16:
@@ -19,23 +21,35 @@ class Buffer:
 
     def decode(self, data):
         self._queue.extendleft(data)
+        self._needs_input = False
+
         while self.__fill():
             if self._d & 0x800000:
                 # uncompressed
-                data = (self._d >> (24 - 9)) & 0xFF
-                self._d = (self._d << 9) & 0xFFFFFF
-                self._use -= 9
-                yield False, data
+                if self._use >= 9:
+                    data = (self._d >> (24 - 9)) & 0xFF
+                    self._d = (self._d << 9) & 0xFFFFFF
+                    self._use -= 9
+                    yield False, data
+                else:
+                    self._needs_input = True
+                    break
             else:
                 # compressed
-                offset = (self._d >> (24 - 11)) & 0x3FF
-                if offset == 0:
+                if self._use >= 11:
+                    offset = (self._d >> (24 - 11)) & 0x3FF
+                    if offset == 0:
+                        self._eof = True
+                        break
+                if self._use >= 15:
+                    offset -= 1  # offset is one based
+                    length = ((self._d >> (24 - 15)) & 0xF) + 2
+                    self._d = (self._d << 15) & 0xFFFFFF
+                    self._use -= 15
+                    yield True, (offset, length)
+                else:
+                    self._needs_input = True
                     break
-                offset -= 1  # offset is one based
-                length = ((self._d >> (24 - 15)) & 0xF) + 2
-                self._d = (self._d << 15) & 0xFFFFFF
-                self._use -= 15
-                yield True, (offset, length)
 
 
 class Decompressor:

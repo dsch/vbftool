@@ -13,3 +13,14 @@ def test_decompress():
     out += decompressor.decompress(compressed_data)
 
     assert (out == data)
+
+
+def test_decompress_chunked():
+    decompressor = Decompressor()
+
+    stream = io.BytesIO(compressed_data)
+    out = b''
+    for chunk in iter(lambda: stream.read(64), b''):
+        out += decompressor.decompress(chunk)
+
+    assert (out == data)
