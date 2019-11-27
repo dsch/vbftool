@@ -15,7 +15,8 @@ def test_reference():
     data = array('B', range(1, 255))
     start_addr = 64 * 1024  # 64 KB
     length = 128 * 1024  # 128 KB
-    vbf = Vbf(VbfVersion.VERSION_JLR3_0, start_addr, length, data)
+    vbf = Vbf(VbfVersion.VERSION_JLR3_0)
+    vbf.add_data(start_addr, data)
     vbf.add_option(opts.Description(['SOP software for X400 AWD',
                                      'Created: 2002-03-14']))
     vbf.add_option(opts.SwPartNumber('318-08832-AB'))

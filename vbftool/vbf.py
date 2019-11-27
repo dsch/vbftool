@@ -57,16 +57,21 @@ class _FileChecksum(Option):
 
 
 class Vbf:
-    def __init__(self, version, start_addr, memory_size, data):
+    def __init__(self, version):
         self.version = version
-        self.start_addr = start_addr
-        self.length = memory_size
-        self.data = data
         self._options = []
+        self._data = []
 
+    def add_data(self, address, data):
+        self._data.append((address, data))
     def dump(self, fp):
-        content = self.create_data_block(self.start_addr, self.data)
-        file_checksum = _FileChecksum(crc32(content))
+        content = bytes()
+        crc = 0
+        for address, data in self._data:
+            block_content = self.create_data_block(address, data)
+            crc = crc32(block_content, crc)
+            content += block_content
+        file_checksum = _FileChecksum(crc)
 
         writeline(fp, 'vbf_version = %s;' % self.version.value)
         newline(fp)
