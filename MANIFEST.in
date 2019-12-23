@@ -1,5 +1,6 @@
 # Include the README
 include *.md
+include *.txt
 
 # Include the license file
 include LICENSE

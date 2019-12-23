@@ -5,6 +5,7 @@ from enum import Enum
 from vbftool.checksum import crc16, crc32
 from vbftool.options import Option
 from vbftool.output import writeline, newline
+from vbftool.lzss import Compressor
 
 log = logging.getLogger(__name__)
 
@@ -64,6 +65,7 @@ class Vbf:
 
     def add_data(self, address, data):
         self._data.append((address, data))
+
     def dump(self, fp):
         content = bytes()
         crc = 0
@@ -91,7 +93,8 @@ class Vbf:
     def create_data_block(start_addr, data):
         data_checksum = crc16(data)  # data checksum is always calculated from uncompressed data
         if 0:  # compression enabled
-            data = lzss.encode(bytes(data), 10, 4)
+            compressor = Compressor()
+            data = compressor.compress(bytes(data))
         data_length = len(data)
         log.info("block start address: 0x%08x", start_addr)
         log.info("block length: 0x%08x", data_length)
