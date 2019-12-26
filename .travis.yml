@@ -1,8 +1,8 @@
 dist: xenial
 
 language: python
-
-matrix:
+cache: pip
+jobs:
   include:
     - python: 3.5
       env: TOXENV=py35
@@ -16,6 +16,3 @@ matrix:
 install: pip install tox
 
 script: tox
-
-notifications:
-  email: false

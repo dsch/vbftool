@@ -39,10 +39,6 @@ setup(
     packages=['vbftool'],
 
     python_requires='>=3.5',
-    extras_require={
-        'dev': ['check-manifest'],
-        'test': ['pytest'],
-    },
 
     # This field corresponds to the "Project-URL" metadata fields:
     # https://packaging.python.org/specifications/core-metadata/#project-url-multiple-use
